@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Festa – AI Event Planning Assistant</title>
+<style>
+:root{--bg:#fbf7f2;--card:#fff;--ink:#2a2230;--mute:#6f6677;--line:#e9e1d8;--ac:#c2410c;--ac2:#fde4d3;--ok:#15803d;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17131b;--card:#221c28;--ink:#f3ecf5;--mute:#a79cb0;--line:#35293d;--ac:#fb923c;--ac2:#3a2418;--ok:#4ade80;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#17131b;--card:#221c28;--ink:#f3ecf5;--mute:#a79cb0;--line:#35293d;--ac:#fb923c;--ac2:#3a2418;--ok:#4ade80;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:860px;margin:0 auto;padding:20px 16px 48px}
+h1{font:700 28px/1.2 Georgia,serif;margin:0 0 4px}
+.sub{color:var(--mute);margin:0 0 18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+label{display:block;font-size:12px;color:var(--mute);margin-bottom:3px}
+input,select,textarea,button{font:inherit;color:inherit}
+input,select,textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:var(--bg)}
+button{cursor:pointer;border:1px solid var(--line);background:var(--card);padding:9px 14px;border-radius:9px}
+button.p{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:600}
+button:disabled{opacity:.6;cursor:wait}
+.tabs{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px}
+.tabs button{white-space:nowrap}.tabs button.on{background:var(--ac2);border-color:var(--ac);color:var(--ac);font-weight:600}
+.row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border:0}
+.bar{height:8px;border-radius:5px;background:var(--line);overflow:hidden;flex:1;min-width:60px}
+.bar i{display:block;height:100%;background:var(--ac)}
+.amt{font-variant-numeric:tabular-nums;min-width:90px;text-align:right}
+.when{font-size:12px;font-weight:600;color:var(--ac);min-width:92px}
+.done{text-decoration:line-through;color:var(--mute)}
+.tag{font-size:11px;background:var(--ac2);color:var(--ac);border-radius:20px;padding:1px 8px}
+.prog{font-size:13px;color:var(--mute);margin-bottom:8px}
+.idea{padding:10px 0;border-bottom:1px solid var(--line)}.idea:last-child{border:0}
+.idea b{display:block}.mute{color:var(--mute)}
+input[type=checkbox]{width:18px;height:18px;flex:none;accent-color:var(--ac)}
+.hide{display:none}
+</style>
+</head>
+<body>
+<main>
+<h1>Festa</h1>
+<p class="sub">Your AI planning assistant for weddings, birthdays and community events.</p>
+
+<section class="card">
+  <div class="grid">
+    <div><label for="type">Event type</label><select id="type"><option value="wedding">Wedding</option><option value="birthday">Birthday</option><option value="community">Community event</option></select></div>
+    <div><label for="guests">Guests</label><input id="guests" type="number" min="5" value="100"></div>
+    <div><label for="budget">Total budget (₹)</label><input id="budget" type="number" min="1000" step="1000" value="500000"></div>
+    <div><label for="date">Event date</label><input id="date" type="date"></div>
+  </div>
+  <div style="margin-top:10px"><label for="notes">Theme, vibe, constraints (optional)</label><textarea id="notes" rows="2" placeholder="e.g. outdoor garden, vegetarian menu, elders attending, small kids"></textarea></div>
+  <div style="margin-top:12px"><button class="p" id="go">Build my plan</button></div>
+</section>
+
+<div id="out" class="hide">
+  <div class="tabs" id="tabs"></div>
+  <section class="card" id="pane"></section>
+</div>
+</main>
+
+<script>
+const DATA={
+wedding:{budget:[["Venue & decor",.30],["Catering",.30],["Photo & video",.10],["Attire & jewellery",.12],["Music & entertainment",.05],["Invitations & gifts",.04],["Travel & stay",.04],["Contingency",.05]],
+ time:[[26,"Set budget, guest list and date; shortlist venues"],[22,"Book venue, priest/officiant and caterer"],[18,"Book photographer, decorator and music"],[14,"Shop attire; send save-the-dates"],[8,"Print and send invitations; book stay for guests"],[4,"Final menu tasting; confirm all vendors in writing"],[2,"Track RSVPs; seating plan; rehearsal run-through"],[0,"Day-of schedule shared; assign a point person; enjoy"]],
+ vendors:["Venue","Caterer","Photographer & videographer","Decorator / florist","Makeup & mehendi","DJ / band","Priest / officiant","Invitations & printing","Transport & stay","Return gifts"]},
+birthday:{budget:[["Venue",.20],["Food & cake",.35],["Decor & balloons",.12],["Entertainment / games",.15],["Photography",.05],["Invites & return gifts",.08],["Contingency",.05]],
+ time:[[6,"Pick date, theme and guest list; set budget"],[5,"Book venue and entertainer"],[4,"Send invitations; order cake"],[2,"Finalise menu; buy decor and return gifts"],[1,"Confirm vendors; prep playlist and games"],[0,"Set up early; assign a helper for photos"]],
+ vendors:["Venue","Caterer / food order","Cake","Decorator","Entertainer / DJ","Photographer","Return gifts","Invitations"]},
+community:{budget:[["Venue & permits",.20],["Food & refreshments",.25],["Stage, sound & lighting",.18],["Marketing & printing",.08],["Activities & prizes",.12],["Volunteers & safety",.07],["Contingency",.10]],
+ time:[[10,"Define purpose, committee roles and budget"],[8,"Get permissions; book venue; seek sponsors"],[6,"Book sound, stage and caterer"],[4,"Open volunteer sign-ups; start promotion"],[2,"Finalise programme; first-aid and safety plan"],[1,"Site walkthrough; confirm vendors and volunteers"],[0,"Run event; collect feedback; post thank-yous"]],
+ vendors:["Venue / permissions","Sound & lighting","Stage / tents","Caterer","Printing & banners","Volunteer coordinator","First aid & security","Photographer"]}};
+const $=id=>document.getElementById(id);
+const inr=n=>"₹"+Math.round(n).toLocaleString("en-IN");
+let st={tab:"budget",done:{},ideas:null};
+try{const s=localStorage.getItem("festa");if(s)st.done=JSON.parse(s).done||{}}catch(e){}
+function save(){try{localStorage.setItem("festa",JSON.stringify({done:st.done}))}catch(e){}}
+function cfg(){return{type:$("type").value,guests:+$("guests").value||0,budget:+$("budget").value||0,date:$("date").value,notes:$("notes").value.trim()}}
+function el(t,c,x){const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+function tabs(){const t=$("tabs");t.textContent="";[["budget","Budget"],["timeline","Timeline"],["vendors","Vendors"],["ideas","Ideas ✨"]].forEach(([k,l])=>{const b=el("button",st.tab===k?"on":"",l);b.onclick=()=>{st.tab=k;render()};t.append(b)})}
+function render(){tabs();const c=cfg(),d=DATA[c.type],p=$("pane");p.textContent="";
+ if(st.tab==="budget"){
+  p.append(el("div","prog",`${inr(c.budget)} for ${c.guests} guests · about ${inr(c.budget/Math.max(c.guests,1))} per guest`));
+  d.budget.forEach(([n,f])=>{const r=el("div","row");r.append(el("span",null,n));r.firstChild.style.minWidth="150px";const b=el("div","bar");const i=document.createElement("i");i.style.width=f*100/.35*100/100+"%";b.append(i);r.append(b,el("span","amt",inr(c.budget*f)),el("span","tag",Math.round(f*100)+"%"));p.append(r)});
+  p.append(el("p","mute","Typical split for this event type. Adjust it to your priorities, and keep the contingency untouched."));
+ }
+ if(st.tab==="timeline"){
+  const ev=c.date?new Date(c.date+"T00:00"):null;
+  if(!ev)p.append(el("p","mute","Pick an event date above to see calendar dates for each milestone."));
+  d.time.forEach(([w,t])=>{const r=el("div","row");let l=w?w+" wks before":"Event day";if(ev){const x=new Date(ev);x.setDate(x.getDate()-w*7);l=x.toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})}
+   r.append(el("span","when",l),el("span",null,t));p.append(r)});
+ }
+ if(st.tab==="vendors"){
+  const k=c.type+":",n=d.vendors.filter((v,i)=>st.done[k+i]).length;
+  p.append(el("div","prog",`${n} of ${d.vendors.length} vendors confirmed`));
+  d.vendors.forEach((v,i)=>{const r=el("label","row"),cb=document.createElement("input");cb.type="checkbox";cb.checked=!!st.done[k+i];const s=el("span",cb.checked?"done":"",v);s.style.fontSize="15px";cb.onchange=()=>{st.done[k+i]=cb.checked;save();render()};r.style.cssText="margin:0;color:inherit;font-size:15px";r.append(cb,s);p.append(r)});
+  p.append(el("p","mute","Tip: get quotes from at least three vendors per category and confirm every booking in writing."));
+ }
+ if(st.tab==="ideas"){
+  const b=el("button","p",st.ideas?"Regenerate ideas":"Generate personalised ideas");b.onclick=ideas;p.append(b);
+  const q=el("div");q.style.cssText="display:flex;gap:8px;margin:12px 0";const qi=el("input");qi.id="q";qi.placeholder="Ask the planner anything, e.g. how do I cut catering costs?";const qb=el("button",null,"Ask");qb.onclick=()=>ask(qi.value);qi.onkeydown=e=>{if(e.key==="Enter")ask(qi.value)};q.append(qi,qb);p.append(q);
+  const o=el("div");o.id="ai";p.append(o);
+  if(st.ideas)show(st.ideas);
+ }}
+function show(items){const o=$("ai");o.textContent="";items.forEach(i=>{const d=el("div","idea");d.append(el("b",null,i.title),el("span","mute",i.detail));o.append(d)})}
+function prompt(c){return `Event: ${c.type}, ${c.guests} guests, budget INR ${c.budget}, date ${c.date||"not set"}. Theme and constraints: ${c.notes||"none given"}. Audience is in India unless the notes say otherwise.`}
+async function ideas(){
+ const o=$("ai"),b=document.querySelector("#pane button.p");const sample=await claude.use("sample");
+ if(!sample){o.textContent="AI ideas are unavailable in this view.";return}
+ b.disabled=true;o.textContent="Thinking…";
+ try{const r=await sample.json(prompt(cfg())+`\nReturn ONLY a JSON array of 8 objects {"title":string,"detail":string} with creative, budget-aware ideas: theme, decor, food, entertainment, a money-saving tip, and a guest-experience touch. Details max 25 words.`);
+  st.ideas=Array.isArray(r)?r:(r.ideas||[]);show(st.ideas)}
+ catch(e){o.textContent=e&&e.code==="not_granted"?"Permission was declined, so AI ideas are off.":"Couldn’t generate ideas right now. Try again shortly."}
+ b.disabled=false}
+async function ask(text){
+ if(!text.trim())return;const o=$("ai"),sample=await claude.use("sample");
+ if(!sample){o.textContent="AI is unavailable in this view.";return}
+ o.textContent="Thinking…";
+ try{const r=await sample(prompt(cfg())+`\nYou are a practical event planner. Answer concisely (under 120 words) in plain text, no markdown.\nQuestion: ${text}`,{cache:false,onText:({text})=>{o.textContent=text}});o.textContent=r.text}
+ catch(e){o.textContent="Couldn’t get an answer right now. Try again shortly."}}
+$("go").onclick=()=>{$("out").classList.remove("hide");st.ideas=null;render();$("out").scrollIntoView({behavior:"smooth"})};
+</script>
+</body>
+</html>
